@@ -1,0 +1,135 @@
+<html>
+	<head>
+		<title>Panneau d'affichage style gare</title>
+        <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+        <style type="text/css">
+        #table {
+            border: 1px solid white;
+            background-color: #000;
+            color: #fff;
+            font: 40px Courier;
+            font-weight: bold;
+        }
+        #table tr {
+            border: 1px solid white;
+            background-color: #000;
+        }
+        #table tr td {
+            border: 1px solid white;
+            padding:5px;
+            width: 24px;
+            height: 57px;
+        }
+        </style>
+	</head>
+    <body>
+        <table id="table">
+            <tr></tr>
+        </table>
+        <hr />
+        <form id="form">
+            <p><button id="reset">Reset</button></p>
+            <p>
+                <input type="text" id="text" value=""/>
+                <input type="submit"/>
+            </p>
+        </form>
+    </body>
+    <script type="text/javascript">
+    var lengthTable = 50;
+    // Initialisation du tableau des caractères
+    var arrChars = new Array();
+    // Tableau contenant l'indice du caractère de chaque cellule
+    var arrPos = new Array();
+    var watchDogCells = new Array();
+    for (var i = 32; i <= 126; i++) {
+        arrChars.push(String.fromCharCode(i));
+    }
+    for (var i = 192; i <= 255; i++) {
+        arrChars.push(String.fromCharCode(i));
+    }
+    /**
+     * Function d'affichage d'un caractère dans une cellule
+     *
+     * @param {integer} cellId L'identifiant de la cellule
+     * @param {String}  char   Le caractère a afficher
+     *
+     * @return {void}
+     */
+    function displayCell(cellId, char)
+    {
+        $('#table tr td:eq('+cellId+')').text(char);
+    }
+    //console.log(arrChars);
+    function initCell(cellId)
+    {
+        if (arrPos[cellId] > 0) {
+            arrPos[cellId] -= 1;
+            displayCell(cellId, arrChars[arrPos[cellId]]);
+            setTimeout('initCell('+cellId+')', 30+(2*cellId));
+        } else {
+            watchDogCells[cellId] = true;
+        }
+    }
+    function setCell(cellId, charId)
+    {
+        if (watchDogCells[cellId] == false) {
+            setTimeout('setCell('+cellId+', '+charId+')', 50);
+            return false;
+        }
+        if (arrPos[cellId] < charId) {
+            arrPos[cellId] += 1;
+            displayCell(cellId, arrChars[arrPos[cellId]]);
+            setTimeout('setCell('+cellId+', '+charId+')', 80+(5*cellId));
+        } else if (arrPos[cellId] == charId) {
+            displayCell(cellId, arrChars[arrPos[cellId]]);
+        }
+        return true;
+    }
+    function initTable()
+    {
+        for (var i = 0; i < lengthTable; i++) {
+            watchDogCells[i] = false;
+            initCell(i);
+        };
+    }
+    function displayText(text)
+    {
+        initTable();
+        // On découpe le texte en maximum 50 caratères
+        var arrText = text.split('').slice(0, 50);
+        // Pour chaque cellule
+        for (var i=0; i < arrText.length; i++) {
+            for (var j = 0; j < arrChars.length; j++) {
+                if (arrText[i] == arrChars[j]) {
+                    setCell(i, j);
+                    break;
+                }
+            }
+        }
+    }
+    $(document).ready(function() {
+        // Creation des cellules
+        var $tr = $('#table tr');
+        for (var i = 0; i < lengthTable; i++) {
+            $('#table tr').append('<td></td>');
+            // Initialisation de la table de position
+            arrPos.push(5);
+            watchDogCells[i] = true;
+        };
+        initTable();
+        $('#form').submit(function(e) {
+            e.preventDefault();
+            var text = $('#text').val();
+            if (text != '') {
+                // On affiche le texte
+                displayText(text);
+            }
+        });
+        $('#reset').click(function(e) {
+            e.preventDefault();
+            initTable();
+        })
+    });
+    </script>
+</html>
